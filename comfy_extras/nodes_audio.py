@@ -158,7 +158,7 @@ class SaveAudio(IO.ComfyNode):
         return IO.Schema(
             node_id="SaveAudio",
             search_aliases=["export flac"],
-            display_name="Save Audio (FLAC)",
+            display_name="Save Audio (FLAC) (Deprecated)",
             category="audio",
             essentials_category="Audio",
             inputs=[
@@ -167,6 +167,7 @@ class SaveAudio(IO.ComfyNode):
             ],
             hidden=[IO.Hidden.prompt, IO.Hidden.extra_pnginfo],
             is_output_node=True,
+            is_deprecated=True,
         )
 
     @classmethod
@@ -184,7 +185,7 @@ class SaveAudioMP3(IO.ComfyNode):
         return IO.Schema(
             node_id="SaveAudioMP3",
             search_aliases=["export mp3"],
-            display_name="Save Audio (MP3)",
+            display_name="Save Audio (MP3) (Deprecated)",
             category="audio",
             essentials_category="Audio",
             inputs=[
@@ -194,6 +195,7 @@ class SaveAudioMP3(IO.ComfyNode):
             ],
             hidden=[IO.Hidden.prompt, IO.Hidden.extra_pnginfo],
             is_output_node=True,
+            is_deprecated=True,
         )
 
     @classmethod
@@ -213,7 +215,7 @@ class SaveAudioOpus(IO.ComfyNode):
         return IO.Schema(
             node_id="SaveAudioOpus",
             search_aliases=["export opus"],
-            display_name="Save Audio (Opus)",
+            display_name="Save Audio (Opus) (Deprecated)",
             category="audio",
             inputs=[
                 IO.Audio.Input("audio"),
@@ -222,6 +224,7 @@ class SaveAudioOpus(IO.ComfyNode):
             ],
             hidden=[IO.Hidden.prompt, IO.Hidden.extra_pnginfo],
             is_output_node=True,
+            is_deprecated=True,
         )
 
     @classmethod
