@@ -560,7 +560,7 @@ class PromptServer():
                             buffer.seek(0)
 
                             return web.Response(body=buffer.read(), content_type=f'image/{image_format}',
-                                                headers={"Content-Disposition": f"attachment; filename=\"{filename}\""})
+                                                headers={"Content-Disposition": f"filename=\"{filename}\""})
 
                     if 'channel' not in request.rel_url.query:
                         channel = 'rgba'
@@ -580,7 +580,7 @@ class PromptServer():
                             buffer.seek(0)
 
                             return web.Response(body=buffer.read(), content_type='image/png',
-                                                headers={"Content-Disposition": f"attachment; filename=\"{filename}\""})
+                                                headers={"Content-Disposition": f"filename=\"{filename}\""})
 
                     elif channel == 'a':
                         with Image.open(file) as img:
@@ -597,7 +597,7 @@ class PromptServer():
                             alpha_buffer.seek(0)
 
                             return web.Response(body=alpha_buffer.read(), content_type='image/png',
-                                                headers={"Content-Disposition": f"attachment; filename=\"{filename}\""})
+                                                headers={"Content-Disposition": f"filename=\"{filename}\""})
                     else:
                         # Use the content type from asset resolution if available,
                         # otherwise guess from the filename.
@@ -614,7 +614,7 @@ class PromptServer():
                         return web.FileResponse(
                             file,
                             headers={
-                                "Content-Disposition": f"attachment; filename=\"{filename}\"",
+                                "Content-Disposition": f"filename=\"{filename}\"",
                                 "Content-Type": content_type
                             }
                         )
@@ -656,6 +656,7 @@ class PromptServer():
             required_frontend_version = FrontendManager.get_required_frontend_version()
             installed_templates_version = FrontendManager.get_installed_templates_version()
             required_templates_version = FrontendManager.get_required_templates_version()
+            comfy_package_versions = FrontendManager.get_comfy_package_versions()
 
             system_stats = {
                 "system": {
@@ -666,6 +667,7 @@ class PromptServer():
                     "required_frontend_version": required_frontend_version,
                     "installed_templates_version": installed_templates_version,
                     "required_templates_version": required_templates_version,
+                    "comfy_package_versions": comfy_package_versions,
                     "python_version": sys.version,
                     "pytorch_version": comfy.model_management.torch_version,
                     "embedded_python": os.path.split(os.path.split(sys.executable)[0])[1] == "python_embeded",
