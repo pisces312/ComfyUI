@@ -5,6 +5,24 @@ import logging
 import sys
 import threading
 
+ANSI_LEVEL_COLORS = {
+    'DEBUG':    '\033[36m',   # cyan
+    'INFO':     '\033[32m',   # green
+    'WARNING':  '\033[33m',   # yellow
+    'ERROR':    '\033[31m',   # red
+    'CRITICAL': '\033[35m',   # magenta
+}
+ANSI_RESET = '\033[0m'
+ANSI_BOLD  = '\033[1m'
+
+
+class ColoredFormatter(logging.Formatter):
+    def format(self, record):
+        color = ANSI_LEVEL_COLORS.get(record.levelname, '')
+        bold  = ANSI_BOLD if record.levelno >= logging.WARNING else ''
+        level_tag = f"{bold}{color}[{record.levelname}]{ANSI_RESET} "
+        return level_tag + super().format(record)
+
 logs = None
 stdout_interceptor = None
 stderr_interceptor = None
@@ -51,7 +69,7 @@ def on_flush(callback):
     if stderr_interceptor is not None:
         stderr_interceptor.on_flush(callback)
 
-def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool = False):
+def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool = False, color_logs: bool = False):
     global logs
     if logs:
         return
@@ -68,8 +86,10 @@ def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool 
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
+    formatter = ColoredFormatter("%(message)s") if color_logs else logging.Formatter("%(message)s")
+
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter("%(message)s"))
+    stream_handler.setFormatter(formatter)
 
     if use_stdout:
         # Only errors and critical to stderr
@@ -77,7 +97,7 @@ def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool 
 
         # Lesser to stdout
         stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(logging.Formatter("%(message)s"))
+        stdout_handler.setFormatter(formatter)
         stdout_handler.addFilter(lambda record: record.levelno < logging.ERROR)
         logger.addHandler(stdout_handler)
 

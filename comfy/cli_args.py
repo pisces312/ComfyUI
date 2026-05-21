@@ -183,6 +183,7 @@ parser.add_argument("--multi-user", action="store_true", help="Enables per-user 
 
 parser.add_argument("--verbose", default='INFO', const='DEBUG', nargs="?", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set the logging level')
 parser.add_argument("--log-stdout", action="store_true", help="Send normal process output to stdout instead of stderr (default).")
+parser.add_argument("--color-logs", action="store_true", help="Enable ANSI colored log output in the terminal.")
 
 
 # The default built-in provider hosted under web/
