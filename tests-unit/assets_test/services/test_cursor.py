@@ -215,6 +215,21 @@ class TestEncoderDecoderSymmetry:
         with pytest.raises(InvalidCursorError, match="value exceeds maximum length"):
             encode_cursor("name", "v" * (MAX_CURSOR_VALUE_LENGTH + 1), "id-1")
 
+    def test_encoder_rejects_multibyte_value_over_wire_cap(self):
+        """A value that passes the char-count cap can still inflate past the
+        wire cap once UTF-8-encoded. Asset name made of 512 × multibyte
+        characters (e.g. 'é' = 2 bytes) must be rejected at encode time, not
+        minted into a cursor the next request will 400."""
+        with pytest.raises(InvalidCursorError, match="encoded cursor exceeds maximum length"):
+            encode_cursor("name", "é" * MAX_CURSOR_VALUE_LENGTH, "asset-multibyte")
+
+    def test_encoder_rejects_escape_heavy_value_over_wire_cap(self):
+        """Same wire-cap concern via escape expansion: each `<` serializes to
+        the six-byte sequence `\\u003c`, so 512 of them blow past the encoded
+        cap even though the raw char count is within the per-field limit."""
+        with pytest.raises(InvalidCursorError, match="encoded cursor exceeds maximum length"):
+            encode_cursor("name", "<" * MAX_CURSOR_VALUE_LENGTH, "asset-escape")
+
 
 class TestOrderBinding:
     def test_order_baked_into_payload(self):

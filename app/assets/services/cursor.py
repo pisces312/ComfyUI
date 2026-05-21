@@ -92,7 +92,16 @@ def encode_cursor(sort_field: str, value: str, id: str, order: str = "desc") -> 
            .replace("\u2028", "\\u2028")
            .replace("\u2029", "\\u2029")
     )
-    return base64.urlsafe_b64encode(raw.encode("utf-8")).rstrip(b"=").decode("ascii")
+    encoded = base64.urlsafe_b64encode(raw.encode("utf-8")).rstrip(b"=").decode("ascii")
+    # Final wire-size guard: the per-field caps above are char-counted, but the
+    # wire cap applies to the base64url of the UTF-8-encoded, escape-expanded
+    # payload. A value full of multibyte or HTML-significant characters (e.g.
+    # 512 \u00d7 "\u00e9" or 512 \u00d7 "<") inflates well past MAX_ENCODED_CURSOR_LENGTH even
+    # though it passes the char-count check. Refuse to mint a cursor the decoder
+    # on the next request would reject.
+    if len(encoded) > MAX_ENCODED_CURSOR_LENGTH:
+        raise InvalidCursorError("encoded cursor exceeds maximum length")
+    return encoded
 
 
 def encode_cursor_from_time(sort_field: str, t: datetime, id: str, order: str = "desc") -> str:
