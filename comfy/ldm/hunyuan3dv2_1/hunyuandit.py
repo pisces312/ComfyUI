@@ -608,8 +608,7 @@ class HunYuanDiTPlain(nn.Module):
 
         x = x.movedim(-1, -2)
 
-        cond_or_uncond = transformer_options.get("cond_or_uncond", [])
-        swap_cfg_halves = len(cond_or_uncond) == 2 and set(cond_or_uncond) == {0, 1}
+        swap_cfg_halves = context.shape[0] >= 2
 
         if swap_cfg_halves:
             first_half, second_half = context.chunk(2, dim = 0)
