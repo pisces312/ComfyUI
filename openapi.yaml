@@ -200,7 +200,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/queue:
     get:
-      operationId: getQueue
+      operationId: getQueueInfo
       tags: [queue]
       summary: Get running and pending queue items
       description: Returns the server's current execution queue, split into the currently-running prompt and the list of pending prompts.
@@ -228,7 +228,7 @@ paths:
 
   /api/interrupt:
     post:
-      operationId: interruptExecution
+      operationId: interruptJob
       tags: [queue]
       summary: Interrupt current execution
       description: Interrupts the prompt that is currently executing. The next queued prompt (if any) will start immediately after.
@@ -329,7 +329,7 @@ paths:
 
   /api/jobs/{job_id}:
     get:
-      operationId: getJob
+      operationId: getJobDetail
       tags: [queue]
       summary: Get a single job by ID
       description: Returns the full record for a single completed prompt execution, including its outputs, status, and metadata.
@@ -706,7 +706,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/object_info:
     get:
-      operationId: getObjectInfo
+      operationId: getNodeInfo
       tags: [node]
       summary: Get all node definitions
       description: |
@@ -809,7 +809,7 @@ paths:
 
   /api/experiment/models:
     get:
-      operationId: getExperimentModels
+      operationId: getModelFolders
       tags: [model]
       summary: List model folders with paths
       description: Returns an array of model folder objects with name and folder paths.
@@ -825,7 +825,7 @@ paths:
 
   /api/experiment/models/{folder}:
     get:
-      operationId: getExperimentModelsByFolder
+      operationId: getModelsInFolder
       tags: [model]
       summary: List model files with metadata
       description: Returns the model files in the given folder with richer metadata (path index, mtime, size) than the legacy `/api/models/{folder}` endpoint.
@@ -889,7 +889,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/users:
     get:
-      operationId: getUsers
+      operationId: getUsersInfo
       tags: [user]
       summary: Get user storage info
       description: |
@@ -952,7 +952,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/userdata:
     get:
-      operationId: listUserdata
+      operationId: getUserdata
       tags: [userdata]
       summary: List files in a userdata directory
       description: Lists files in the authenticated user's data directory. Returns either filename strings or full objects depending on the `full_info` query parameter.
@@ -1050,7 +1050,7 @@ paths:
         "404":
           description: File not found
     post:
-      operationId: writeUserdataFile
+      operationId: postUserdataFile
       tags: [userdata]
       summary: Write or create a userdata file
       description: Writes (creates or replaces) a file in the authenticated user's data directory.
@@ -1156,7 +1156,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/settings:
     get:
-      operationId: getSettings
+      operationId: getAllSettings
       tags: [settings]
       summary: Get all user settings
       description: Returns all settings for the authenticated user.
@@ -1171,7 +1171,7 @@ paths:
                 type: object
                 additionalProperties: true
     post:
-      operationId: updateSettings
+      operationId: updateMultipleSettings
       tags: [settings]
       summary: Update user settings (partial merge)
       description: Replaces the authenticated user's settings with the provided object.
@@ -1191,7 +1191,7 @@ paths:
 
   /api/settings/{id}:
     get:
-      operationId: getSetting
+      operationId: getSettingById
       tags: [settings]
       summary: Get a single setting by key
       description: Returns the value of a single setting, identified by key.
@@ -1212,7 +1212,7 @@ paths:
                 nullable: true
                 description: The setting value (any JSON type), or null if not set
     post:
-      operationId: updateSetting
+      operationId: updateSettingById
       tags: [settings]
       summary: Set a single setting value
       description: Sets the value of a single setting, identified by key.
@@ -1454,7 +1454,7 @@ paths:
 
   /internal/files/{directory_type}:
     get:
-      operationId: getInternalFiles
+      operationId: getFiles
       tags: [internal]
       summary: List files in a directory type
       description: Lists the files present in one of ComfyUI's known directories (input, output, or temp).
@@ -1576,7 +1576,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListAssetsResponse"
     post:
-      operationId: createAsset
+      operationId: uploadAsset
       tags: [assets]
       summary: Upload a new asset
       description: Uploads a new asset (binary content plus metadata) and registers it in the asset database.
@@ -1709,7 +1709,7 @@ paths:
 
   /api/assets/{id}:
     get:
-      operationId: getAsset
+      operationId: getAssetById
       tags: [assets]
       summary: Get asset metadata
       description: Returns the metadata for a single asset.
@@ -1925,7 +1925,7 @@ paths:
 
   /api/assets/tags/refine:
     get:
-      operationId: refineAssetTags
+      operationId: getAssetTagHistogram
       tags: [assets]
       summary: Get tag counts for assets matching current filters
       description: Returns suggested additional tags that would refine a filtered asset query, together with the count of assets each tag would select.
@@ -2119,7 +2119,7 @@ paths:
 
   /api/job/{job_id}/status:
     get:
-      operationId: getCloudJobStatus
+      operationId: getJobStatus
       tags: [queue]
       summary: Get status of a cloud job
       deprecated: true
@@ -2193,7 +2193,7 @@ paths:
 
   /api/history_v2:
     get:
-      operationId: getHistoryV2
+      operationId: getHistory
       tags: [history]
       summary: Get paginated execution history (v2)
       deprecated: true
@@ -2236,7 +2236,7 @@ paths:
 
   /api/history_v2/{prompt_id}:
     get:
-      operationId: getHistoryV2ByPromptId
+      operationId: getHistoryForPrompt
       tags: [history]
       summary: Get v2 history for a specific prompt
       deprecated: true
@@ -2275,7 +2275,7 @@ paths:
 
   /api/logs:
     get:
-      operationId: getCloudLogs
+      operationId: getLogs
       tags: [system]
       summary: Get cloud execution logs
       deprecated: true
@@ -2322,7 +2322,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/assets/download:
     post:
-      operationId: downloadAssets
+      operationId: createAssetDownload
       tags: [assets]
       summary: Download assets to cloud runtime
       description: "[cloud-only] Initiates a download of one or more assets to the cloud runtime environment. Returns a task ID for tracking download progress via WebSocket."
@@ -2378,7 +2378,7 @@ paths:
 
   /api/assets/export:
     post:
-      operationId: exportAssets
+      operationId: createAssetExport
       tags: [assets]
       summary: Export assets as a downloadable archive
       description: "[cloud-only] Initiates a bulk export of assets. Returns a task ID for tracking progress via WebSocket. When complete, the export can be downloaded via the exports endpoint."
@@ -2473,7 +2473,7 @@ paths:
 
   /api/assets/from-workflow:
     post:
-      operationId: createAssetsFromWorkflow
+      operationId: postAssetsFromWorkflow
       tags: [assets]
       summary: Create asset records from a workflow execution
       description: "[cloud-only] Registers output files from a workflow execution as assets in the asset database."
@@ -2563,7 +2563,7 @@ paths:
 
   /api/assets/remote-metadata:
     get:
-      operationId: getAssetRemoteMetadata
+      operationId: getRemoteAssetMetadata
       tags: [assets]
       summary: Fetch metadata for a remote asset URL
       description: "[cloud-only] Fetches and returns metadata (content type, size, filename) for a remote URL without downloading the full content."
@@ -2751,7 +2751,7 @@ paths:
 
   /api/hub/assets/upload-url:
     post:
-      operationId: getHubAssetUploadUrl
+      operationId: createHubAssetUploadUrl
       tags: [hub]
       summary: Get a pre-signed upload URL for a hub asset
       description: "[cloud-only] Returns a pre-signed URL that can be used to upload an asset file directly to storage."
@@ -2935,7 +2935,7 @@ paths:
 
   /api/hub/profiles/check:
     get:
-      operationId: checkHubProfileUsername
+      operationId: checkHubUsername
       tags: [hub]
       summary: Check if a hub username is available
       description: "[cloud-only] Returns whether the given username is available for registration."
@@ -3175,7 +3175,7 @@ paths:
 
   /api/hub/workflows/index:
     get:
-      operationId: getHubWorkflowIndex
+      operationId: listHubWorkflowIndex
       tags: [hub]
       summary: Get the hub workflow index
       description: "[cloud-only] Returns the lightweight index of all hub workflows for client-side search and navigation."
@@ -3195,7 +3195,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/workflows:
     get:
-      operationId: listCloudWorkflows
+      operationId: listWorkflows
       tags: [workflows]
       summary: List cloud workflows
       description: "[cloud-only] Returns a paginated list of the authenticated user's cloud workflows."
@@ -3241,7 +3241,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     post:
-      operationId: createCloudWorkflow
+      operationId: createWorkflow
       tags: [workflows]
       summary: Create a new cloud workflow
       description: "[cloud-only] Creates a new cloud workflow with the provided name and optional initial content."
@@ -3287,7 +3287,7 @@ paths:
 
   /api/workflows/{workflow_id}:
     get:
-      operationId: getCloudWorkflow
+      operationId: getWorkflow
       tags: [workflows]
       summary: Get a cloud workflow by ID
       description: "[cloud-only] Returns the metadata for a cloud workflow."
@@ -3320,7 +3320,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     patch:
-      operationId: updateCloudWorkflow
+      operationId: updateWorkflow
       tags: [workflows]
       summary: Update a cloud workflow
       description: "[cloud-only] Updates the metadata (name, description) of an existing cloud workflow."
@@ -3370,7 +3370,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     delete:
-      operationId: deleteCloudWorkflow
+      operationId: deleteWorkflow
       tags: [workflows]
       summary: Delete a cloud workflow
       description: "[cloud-only] Deletes a cloud workflow and all its versions."
@@ -3401,7 +3401,7 @@ paths:
 
   /api/workflows/{workflow_id}/content:
     get:
-      operationId: getCloudWorkflowContent
+      operationId: getWorkflowContent
       tags: [workflows]
       summary: Get the content of a cloud workflow
       description: "[cloud-only] Returns the full workflow graph JSON for the latest version of a cloud workflow."
@@ -3490,7 +3490,7 @@ paths:
 
   /api/workflows/{workflow_id}/fork:
     post:
-      operationId: forkCloudWorkflow
+      operationId: forkWorkflow
       tags: [workflows]
       summary: Fork a cloud workflow
       description: "[cloud-only] Creates a copy of a cloud workflow under the authenticated user's account."
@@ -3587,7 +3587,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     post:
-      operationId: createCloudWorkflowVersion
+      operationId: createWorkflowVersion
       tags: [workflows]
       summary: Create a new cloud workflow version
       description: "[cloud-only] Creates a new workflow version with updated workflow JSON. Uses optimistic concurrency via base_version."
@@ -3690,7 +3690,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     post:
-      operationId: createAuthSession
+      operationId: createSession
       tags: [auth]
       summary: Create a session cookie
       description: "[cloud-only] Creates a session cookie from the bearer token in the Authorization header. Returns a Set-Cookie header with a secure HttpOnly session cookie. Cookie authentication is not allowed for this endpoint."
@@ -3715,7 +3715,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     delete:
-      operationId: deleteAuthSession
+      operationId: deleteSession
       tags: [auth]
       summary: Delete session cookie (logout)
       description: "[cloud-only] Clears the session cookie and optionally revokes the session on the server."
@@ -3730,7 +3730,7 @@ paths:
 
   /api/auth/token:
     post:
-      operationId: createAuthToken
+      operationId: exchangeToken
       tags: [auth]
       summary: Exchange credentials for an access token
       description: "[cloud-only] Exchanges authentication credentials (e.g. an authorization code) for an access token."
@@ -4108,7 +4108,7 @@ paths:
 
   /api/billing/events:
     get:
-      operationId: listBillingEvents
+      operationId: getBillingEvents
       tags: [billing]
       summary: List billing events
       description: "[cloud-only] Returns a paginated list of billing events (charges, credits, refunds) for the authenticated user."
@@ -4145,7 +4145,7 @@ paths:
 
   /api/billing/ops/{id}:
     get:
-      operationId: getBillingOp
+      operationId: getBillingOpStatus
       tags: [billing]
       summary: Get a billing operation by ID
       description: "[cloud-only] Returns details of a specific billing operation."
@@ -4179,7 +4179,7 @@ paths:
 
   /api/billing/payment-portal:
     post:
-      operationId: createPaymentPortalSession
+      operationId: getPaymentPortal
       tags: [billing]
       summary: Create a payment portal session
       description: "[cloud-only] Creates a Stripe customer portal session for managing payment methods and invoices. Returns a URL to redirect the user to."
@@ -4205,7 +4205,7 @@ paths:
 
   /api/billing/plans:
     get:
-      operationId: listBillingPlans
+      operationId: getBillingPlans
       tags: [billing]
       summary: List available billing plans
       description: "[cloud-only] Returns the list of available subscription plans and their pricing."
@@ -4222,7 +4222,7 @@ paths:
 
   /api/billing/preview-subscribe:
     post:
-      operationId: previewSubscription
+      operationId: previewSubscribe
       tags: [billing]
       summary: Preview a subscription change
       description: "[cloud-only] Returns a preview of what a subscription change would cost, including prorations."
@@ -4282,7 +4282,7 @@ paths:
 
   /api/billing/subscribe:
     post:
-      operationId: createSubscription
+      operationId: subscribe
       tags: [billing]
       summary: Subscribe to a billing plan
       description: "[cloud-only] Creates a new subscription to the specified billing plan."
@@ -4366,7 +4366,7 @@ paths:
 
   /api/billing/topup:
     post:
-      operationId: topUpCredits
+      operationId: createTopup
       tags: [billing]
       summary: Purchase additional credits
       description: "[cloud-only] Purchases a one-time credit top-up using the user's payment method on file."
@@ -4408,7 +4408,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/workspace/api-keys:
     get:
-      operationId: listWorkspaceApiKeys
+      operationId: listWorkspaceAPIKeys
       tags: [workspace]
       summary: List workspace API keys
       description: "[cloud-only] Returns the list of API keys for the current workspace."
@@ -4435,7 +4435,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     post:
-      operationId: createWorkspaceApiKey
+      operationId: createWorkspaceAPIKey
       tags: [workspace]
       summary: Create a workspace API key
       description: "[cloud-only] Creates a new API key for the current workspace."
@@ -4484,7 +4484,7 @@ paths:
 
   /api/workspace/api-keys/{id}:
     delete:
-      operationId: deleteWorkspaceApiKey
+      operationId: revokeWorkspaceAPIKey
       tags: [workspace]
       summary: Delete a workspace API key
       description: "[cloud-only] Revokes and deletes a workspace API key."
@@ -4603,7 +4603,7 @@ paths:
 
   /api/workspace/invites/{inviteId}:
     delete:
-      operationId: deleteWorkspaceInvite
+      operationId: revokeWorkspaceInvite
       tags: [workspace]
       summary: Cancel a workspace invite
       description: "[cloud-only] Cancels a pending workspace invitation."
@@ -4731,7 +4731,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     delete:
-      operationId: bulkRevokeMemberApiKeys
+      operationId: bulkRevokeWorkspaceMemberAPIKeys
       tags: [workspace]
       summary: Bulk revoke a member's API keys
       description: "[cloud-only] Revokes all active API keys for a specific workspace member. Only workspace owners can perform this action."
@@ -5201,7 +5201,7 @@ paths:
 
   /api/invites/{token}/accept:
     post:
-      operationId: acceptInvite
+      operationId: acceptWorkspaceInvite
       tags: [workspace]
       summary: Accept a workspace invitation
       description: "[cloud-only] Accepts a workspace invitation using the invite token. The authenticated user is added to the workspace."
@@ -5419,7 +5419,7 @@ paths:
 
   /api/user:
     get:
-      operationId: getCloudUser
+      operationId: getUser
       tags: [user]
       summary: Get the authenticated cloud user
       description: "[cloud-only] Returns the profile and account information for the currently authenticated user."
@@ -5509,7 +5509,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CloudError"
     post:
-      operationId: publishUserdataFile
+      operationId: postUserdataFilePublish
       tags: [userdata]
       summary: Publish a userdata file to the cloud
       description: "[cloud-only] Makes a userdata file available via a public URL for sharing or embedding."
@@ -5548,7 +5548,7 @@ paths:
 
   /api/vhs/queryvideo:
     get:
-      operationId: queryVhsVideo
+      operationId: getVhsQueryVideo
       tags: [view]
       summary: Query VHS video metadata
       description: "[cloud-only] Returns metadata about a video file processed by the VHS (Video Helper Suite) integration."
