@@ -356,7 +356,7 @@ paths:
   # ---------------------------------------------------------------------------
   /api/history:
     get:
-      operationId: getHistory
+      operationId: getPromptHistory
       tags: [history]
       summary: Get execution history
       deprecated: true
