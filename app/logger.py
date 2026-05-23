@@ -5,13 +5,25 @@ import logging
 import sys
 import threading
 
-ANSI_LEVEL_COLORS = {
-    'DEBUG':    '\033[36m',   # cyan
-    'INFO':     '\033[32m',   # green
-    'WARNING':  '\033[33m',   # yellow
-    'ERROR':    '\033[31m',   # red
-    'CRITICAL': '\033[35m',   # magenta
+ANSI_NAMED_COLORS = {
+    'black':   '\033[30m',
+    'red':     '\033[31m',
+    'green':   '\033[32m',
+    'yellow':  '\033[33m',
+    'blue':    '\033[34m',
+    'magenta': '\033[35m',
+    'cyan':    '\033[36m',
+    'white':   '\033[37m',
 }
+
+ANSI_LEVEL_COLORS = {
+    'DEBUG':    ANSI_NAMED_COLORS['cyan'],
+    'INFO':     ANSI_NAMED_COLORS['green'],
+    'WARNING':  ANSI_NAMED_COLORS['yellow'],
+    'ERROR':    ANSI_NAMED_COLORS['red'],
+    'CRITICAL': ANSI_NAMED_COLORS['magenta'],
+}
+
 ANSI_RESET = '\033[0m'
 ANSI_BOLD  = '\033[1m'
 
@@ -21,7 +33,11 @@ class ColoredFormatter(logging.Formatter):
         color = ANSI_LEVEL_COLORS.get(record.levelname, '')
         bold  = ANSI_BOLD if record.levelno >= logging.WARNING else ''
         level_tag = f"{bold}{color}[{record.levelname}]{ANSI_RESET} "
-        return level_tag + super().format(record)
+        message = super().format(record)
+        line_color = ANSI_NAMED_COLORS.get(getattr(record, 'color', ''), '')
+        if line_color:
+            return f"{level_tag}{line_color}{message}{ANSI_RESET}"
+        return level_tag + message
 
 logs = None
 stdout_interceptor = None
