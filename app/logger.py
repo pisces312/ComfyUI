@@ -85,7 +85,7 @@ def on_flush(callback):
     if stderr_interceptor is not None:
         stderr_interceptor.on_flush(callback)
 
-def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool = False, color_logs: bool = True):
+def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool = False):
     global logs
     if logs:
         return
@@ -102,7 +102,7 @@ def setup_logger(log_level: str = 'INFO', capacity: int = 300, use_stdout: bool 
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
-    formatter = ColoredFormatter("%(message)s") if color_logs else logging.Formatter("%(message)s")
+    formatter = ColoredFormatter("%(message)s")
 
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
