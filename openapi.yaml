@@ -275,7 +275,10 @@ paths:
       responses:
         "200":
           description: Queue updated
-
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueManageResponse"
         '400':
           description: Invalid request parameters
           content:
@@ -7465,6 +7468,25 @@ components:
           items:
             type: string
           description: Array of prompt IDs to delete from queue
+
+    QueueManageResponse:
+      type: object
+      x-runtime: [cloud]
+      description: >-
+        [cloud-only] Result of a queue mutation. The Cloud runtime returns which
+        items were deleted and whether the queue was cleared; local ComfyUI
+        returns an empty 200 body.
+      properties:
+        deleted:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Prompt IDs that were deleted from the queue.
+        cleared:
+          type: boolean
+          nullable: true
+          description: Whether the queue was cleared.
 
     # -------------------------------------------------------------------
     # History
