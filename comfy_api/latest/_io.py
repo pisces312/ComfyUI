@@ -777,6 +777,23 @@ class Load3DCamera(ComfyTypeIO):
     Type = CameraInfo
 
 
+@comfytype(io_type="LOAD3D_MODEL_INFO")
+class Load3DModelInfo(ComfyTypeIO):
+    class ModelTransform(TypedDict):
+        uuid: str
+        name: str
+        type: str
+        position: dict[str, float | int]
+        rotation: dict[str, float | int | str]
+        quaternion: dict[str, float | int]
+        scale: dict[str, float | int]
+        up: dict[str, float | int]
+        visible: bool
+        matrix: list[float]
+
+    Type = list[ModelTransform]
+
+
 @comfytype(io_type="LOAD_3D")
 class Load3D(ComfyTypeIO):
     """3D models are stored as a dictionary."""
@@ -786,6 +803,7 @@ class Load3D(ComfyTypeIO):
         normal: str
         camera_info: Load3DCamera.CameraInfo
         recording: NotRequired[str]
+        model_info: NotRequired[list[Load3DModelInfo.ModelTransform]]
 
     Type = Model3DDict
 
@@ -2298,6 +2316,7 @@ __all__ = [
     "FlowControl",
     "Accumulation",
     "Load3DCamera",
+    "Load3DModelInfo",
     "Load3D",
     "Load3DAnimation",
     "Photomaker",
