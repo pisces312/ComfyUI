@@ -887,9 +887,9 @@ paths:
                     x-runtime: [cloud]
                     description: "[cloud-only] Version identifier for the workflow templates bundle. Local ComfyUI returns null."
                   workflow_templates_source:
-                    type: string
                     nullable: true
-                    enum: [dynamic_config_override, workflow_templates_version_json]
+                    allOf:
+                      - $ref: "#/components/schemas/WorkflowTemplatesSource"
                     x-runtime: [cloud]
                     description: "[cloud-only] How the templates version was resolved. Local ComfyUI returns null."
 
@@ -11918,3 +11918,11 @@ components:
           x-runtime:
             - cloud
           description: "[cloud-only] Numeric rating (e.g. 1-5 stars) associated with the feedback."
+
+    WorkflowTemplatesSource:
+      type: string
+      x-runtime: [cloud]
+      enum:
+        - dynamic_config_override
+        - workflow_templates_version_json
+      description: "[cloud-only] How the workflow templates version was resolved (config override vs. bundled JSON)."
