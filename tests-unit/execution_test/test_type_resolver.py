@@ -360,6 +360,52 @@ def test_invalidate_clears_cache(fake_nodes_module, TypeResolver):
     assert r.resolve_output_type("n1", 0) == "LATENT"
 
 
+# ---------------------------------------------------------------------------
+# Malformed input robustness
+# ---------------------------------------------------------------------------
+
+def test_malformed_link_does_not_crash(fake_nodes_module, TypeResolver):
+    """A link with a non-int slot index must not raise; resolver returns AnyType."""
+    fake_nodes_module["Src"] = _v1_node(("IMAGE",))
+    fake_nodes_module["Sink"] = _v1_node(("INT",), {"required": {"x": ("*",)}})
+    prompt = {
+        "src": {"class_type": "Src", "inputs": {}},
+        # slot index sent as a string (common API JSON mistake)
+        "sink": {"class_type": "Sink", "inputs": {"x": ["src", "0"]}},
+    }
+    r = TypeResolver(prompt)
+    # Falls back to declared slot type (still "*"), no exception.
+    assert r.resolve_input_type("sink", "x") == "*"
+
+
+def test_malformed_link_wrong_arity_does_not_crash(fake_nodes_module, TypeResolver):
+    fake_nodes_module["Src"] = _v1_node(("IMAGE",))
+    fake_nodes_module["Sink"] = _v1_node(("INT",), {"required": {"x": ("*",)}})
+    prompt = {
+        "src": {"class_type": "Src", "inputs": {}},
+        "sink": {"class_type": "Sink", "inputs": {"x": ["src"]}},  # arity 1
+    }
+    r = TypeResolver(prompt)
+    assert r.resolve_input_type("sink", "x") == "*"
+
+
+def test_direct_resolve_output_type_with_bad_slot_idx_returns_any(fake_nodes_module, TypeResolver):
+    fake_nodes_module["Src"] = _v1_node(("IMAGE",))
+    prompt = {"src": {"class_type": "Src", "inputs": {}}}
+    r = TypeResolver(prompt)
+    # type-wise these should be unreachable through normal validation but the
+    # resolver must still degrade gracefully.
+    assert r.resolve_output_type("src", "0") == "*"
+    assert r.resolve_output_type("src", True) == "*"  # bool is a subclass of int
+    assert r.is_output_list("src", "0") is False
+
+
+def test_non_string_class_type_returns_any(fake_nodes_module, TypeResolver):
+    prompt = {"n1": {"class_type": 42, "inputs": {}}}
+    r = TypeResolver(prompt)
+    assert r.resolve_output_type("n1", 0) == "*"
+
+
 def test_invalidate_node_only_clears_that_node(fake_nodes_module, TypeResolver):
     fake_nodes_module["SrcA"] = _v1_node(("IMAGE",))
     fake_nodes_module["SrcB"] = _v1_node(("LATENT",))

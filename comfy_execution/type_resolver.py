@@ -27,6 +27,25 @@ from typing import Any
 from comfy_api.latest import io
 from comfy_api.internal import _ComfyNodeInternal
 
+
+def _parse_link(val: Any) -> tuple[str, int] | None:
+    """Return (src_node_id, src_slot_idx) if ``val`` is a well-formed link.
+
+    A link in the prompt schema is a length-2 list/tuple ``[node_id, slot_idx]``
+    where ``node_id`` is a string and ``slot_idx`` is a non-negative int.
+    Anything else (including ``[node_id, "0"]`` from malformed API JSON) returns
+    ``None`` so callers can fall back to AnyType instead of crashing.
+    """
+    if not isinstance(val, (list, tuple)) or len(val) != 2:
+        return None
+    src_node, src_slot = val[0], val[1]
+    if not isinstance(src_node, str):
+        return None
+    # bool is a subclass of int — reject it to avoid treating True/False as slot 1/0.
+    if isinstance(src_slot, bool) or not isinstance(src_slot, int):
+        return None
+    return src_node, src_slot
+
 # Sentinel for "type is unknown / wildcard". Matches AnyType.io_type ("*").
 ANY_TYPE: str = io.AnyType.io_type
 
@@ -76,6 +95,18 @@ class TypeResolver:
         import nodes
         return nodes.NODE_CLASS_MAPPINGS.get(class_type)
 
+    def _get_class_def_for_node(self, node_id: str):
+        """Return (node_dict, class_def) for ``node_id``, or ``(None, None)``."""
+        if not self._has_node(node_id):
+            return None, None
+        node = self._get_node(node_id)
+        if node is None:
+            return None, None
+        class_type = node.get("class_type")
+        if not isinstance(class_type, str):
+            return node, None
+        return node, self._get_class_def(class_type)
+
     # ---- cache management -------------------------------------------------
     def invalidate(self) -> None:
         """Clear all cached resolutions. Cheap; call after any graph mutation."""
@@ -97,8 +128,15 @@ class TypeResolver:
         """Return the resolved io_type string of ``node_id``'s output slot.
 
         Falls back to ``ANY_TYPE`` on cycle, depth-overflow, unknown class,
-        out-of-range slot, missing node, or unresolved MatchType template.
+        out-of-range slot, missing node, malformed link, or unresolved
+        MatchType template.
         """
+        # Guard against malformed callers passing non-int slot indices (e.g.
+        # API JSON that sent a string). Falling back to AnyType is safer than
+        # raising TypeError mid-validation.
+        if isinstance(slot_idx, bool) or not isinstance(slot_idx, int):
+            return ANY_TYPE
+
         cache_key = (node_id, slot_idx)
         if cache_key in self._output_cache:
             return self._output_cache[cache_key]
@@ -113,17 +151,10 @@ class TypeResolver:
             return ANY_TYPE
         next_stack = _stack | {cache_key}
 
-        if not self._has_node(node_id):
-            return ANY_TYPE
-
-        node = self._get_node(node_id)
-        if node is None:
-            return ANY_TYPE
-
-        class_type = node.get("class_type")
-        class_def = self._get_class_def(class_type) if class_type is not None else None
+        node, class_def = self._get_class_def_for_node(node_id)
         if class_def is None:
             return ANY_TYPE
+        class_type = node.get("class_type")
 
         try:
             return_types = class_def.RETURN_TYPES
@@ -193,13 +224,13 @@ class TypeResolver:
             val = inputs_dict.get(inp.id)
             if val is None:
                 continue
-            if isinstance(val, list) and len(val) == 2 and isinstance(val[0], str):
-                src_node, src_slot = val[0], val[1]
-                t = self.resolve_output_type(src_node, src_slot, stack)
+            link = _parse_link(val)
+            if link is not None:
+                t = self.resolve_output_type(link[0], link[1], stack)
                 if t != ANY_TYPE:
                     return t
-            # Literal value: a MatchType slot has no concrete declared type, so
-            # we cannot infer anything useful here.
+            # Literal value (or malformed link): a MatchType slot has no
+            # concrete declared type, so we cannot infer anything useful here.
         if not any_input_seen:
             # Schema declared a template_id with no Input bearing it. This is a
             # node-author bug; warn once.
@@ -212,17 +243,17 @@ class TypeResolver:
 
     def is_output_list(self, node_id: str, slot_idx: int) -> bool:
         """Whether the source slot is declared as a list output (``OUTPUT_IS_LIST[idx]``)."""
+        if isinstance(slot_idx, bool) or not isinstance(slot_idx, int):
+            return False
         cache_key = (node_id, slot_idx)
         if cache_key in self._is_output_list_cache:
             return self._is_output_list_cache[cache_key]
         result = False
-        node = self._get_node(node_id)
-        if node is not None:
-            class_def = self._get_class_def(node.get("class_type"))
-            if class_def is not None:
-                lst = getattr(class_def, "OUTPUT_IS_LIST", None)
-                if lst is not None and 0 <= slot_idx < len(lst):
-                    result = bool(lst[slot_idx])
+        _, class_def = self._get_class_def_for_node(node_id)
+        if class_def is not None:
+            lst = getattr(class_def, "OUTPUT_IS_LIST", None)
+            if lst is not None and 0 <= slot_idx < len(lst):
+                result = bool(lst[slot_idx])
         self._is_output_list_cache[cache_key] = result
         return result
 
@@ -234,7 +265,8 @@ class TypeResolver:
         * If the value is a literal, return the declared slot's effective
           io_type (peeling dynamic-input wrappers — e.g. an Autogrow-of-Image
           slot resolves to ``IMAGE``, not ``COMFY_AUTOGROW_V3``).
-        * If the value is missing or the slot is unknown, return ``ANY_TYPE``.
+        * If the value is missing, malformed, or the slot is unknown, return
+          ``ANY_TYPE``.
         """
         node = self._get_node(node_id)
         if node is None:
@@ -242,9 +274,9 @@ class TypeResolver:
         inputs = node.get("inputs", {}) or {}
         if input_id not in inputs:
             return ANY_TYPE
-        val = inputs[input_id]
-        if isinstance(val, list) and len(val) == 2 and isinstance(val[0], str):
-            return self.resolve_output_type(val[0], val[1])
+        link = _parse_link(inputs[input_id])
+        if link is not None:
+            return self.resolve_output_type(link[0], link[1])
         return self.get_declared_slot_io_type(node_id, input_id)
 
     def is_input_list(self, node_id: str, input_id: str) -> bool:
@@ -252,10 +284,10 @@ class TypeResolver:
         node = self._get_node(node_id)
         if node is None:
             return False
-        val = (node.get("inputs", {}) or {}).get(input_id)
-        if isinstance(val, list) and len(val) == 2 and isinstance(val[0], str):
-            return self.is_output_list(val[0], val[1])
-        return False
+        link = _parse_link((node.get("inputs", {}) or {}).get(input_id))
+        if link is None:
+            return False
+        return self.is_output_list(link[0], link[1])
 
     def get_declared_slot_io_type(self, node_id: str, input_id: str) -> str:
         """Return the effective declared io_type of a node's input slot.
@@ -269,10 +301,7 @@ class TypeResolver:
         * DynamicCombo / unsupported → ``ANY_TYPE`` (the combo key is itself
           dynamic, not a meaningful type for consumers)
         """
-        node = self._get_node(node_id)
-        if node is None:
-            return ANY_TYPE
-        class_def = self._get_class_def(node.get("class_type"))
+        _, class_def = self._get_class_def_for_node(node_id)
         if class_def is None:
             return ANY_TYPE
 
